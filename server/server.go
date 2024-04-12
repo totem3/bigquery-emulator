@@ -48,7 +48,6 @@ func New(storage Storage) (*Server, error) {
 		}
 	}
 	db, err := sql.Open("zetasqlite", string(storage))
-	db.SetMaxIdleConns(1)
 	db.SetConnMaxIdleTime(-1)
 	db.SetConnMaxLifetime(1<<63 - 1)
 	if err != nil {

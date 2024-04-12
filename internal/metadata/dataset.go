@@ -65,14 +65,20 @@ func (d *Dataset) UpdateContent(newContent *bigqueryv2.Dataset) {
 }
 
 func (d *Dataset) Insert(ctx context.Context, tx *sql.Tx) error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
 	return d.repo.AddDataset(ctx, tx, d)
 }
 
 func (d *Dataset) Delete(ctx context.Context, tx *sql.Tx) error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
 	return d.repo.DeleteDataset(ctx, tx, d)
 }
 
 func (d *Dataset) DeleteModel(ctx context.Context, tx *sql.Tx, id string) error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
 	model, err := d.repo.FindModel(ctx, d.ProjectID, d.ID, id)
 	if err != nil {
 		return err
@@ -87,17 +93,17 @@ func (d *Dataset) DeleteModel(ctx context.Context, tx *sql.Tx, id string) error 
 }
 
 func (d *Dataset) AddTable(ctx context.Context, tx *sql.Tx, table *Table) error {
-	d.mu.Lock()
 	exists, err := d.repo.TableExists(ctx, tx, d.ProjectID, d.ID, table.ID)
 	if err != nil {
 		return err
 	}
 	if exists {
-		d.mu.Unlock()
 		return fmt.Errorf("table %s: %w", table.ID, ErrDuplicatedTable)
 	}
+
+	d.mu.Lock()
+	defer d.mu.Unlock()
 	if err := table.Insert(ctx, tx); err != nil {
-		d.mu.Unlock()
 		return err
 	}
 
@@ -108,26 +114,38 @@ func (d *Dataset) AddTable(ctx context.Context, tx *sql.Tx, table *Table) error 
 }
 
 func (d *Dataset) Table(ctx context.Context, id string) (*Table, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
 	return d.repo.FindTable(ctx, d.ProjectID, d.ID, id)
 }
 
 func (d *Dataset) Model(ctx context.Context, id string) (*Model, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
 	return d.repo.FindModel(ctx, d.ProjectID, d.ID, id)
 }
 
 func (d *Dataset) Routine(ctx context.Context, id string) (*Routine, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
 	return d.repo.FindRoutine(ctx, d.ProjectID, d.ID, id)
 }
 
 func (d *Dataset) Tables(ctx context.Context) ([]*Table, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
 	return d.repo.FindTablesInDatasets(ctx, d.ProjectID, d.ID)
 }
 
 func (d *Dataset) Models(ctx context.Context) ([]*Model, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
 	return d.repo.FindModelsInDataset(ctx, d.ProjectID, d.ID)
 }
 
 func (d *Dataset) Routines(ctx context.Context) ([]*Routine, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
 	return d.repo.FindRoutinesInDataset(ctx, d.ProjectID, d.ID)
 }
 
@@ -137,7 +155,6 @@ func NewDataset(
 	datasetID string,
 	content *bigqueryv2.Dataset,
 ) *Dataset {
-
 	return &Dataset{
 		ID:        datasetID,
 		ProjectID: projectID,

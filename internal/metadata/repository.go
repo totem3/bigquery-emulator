@@ -69,16 +69,15 @@ type Repository struct {
 
 const (
 	StmtFindProject           internal.Statement = `SELECT id FROM projects WHERE id = @id`
-	StmtInsertProject         internal.Statement = `INSERT projects (id) VALUES (@id)`
+	StmtInsertProject         internal.Statement = `INSERT INTO projects (id) VALUES (@id)`
 	StmtDeleteProject         internal.Statement = `DELETE FROM projects WHERE id = @id`
 	StmtFindJobsInProject     internal.Statement = `SELECT id, projectID, metadata, result, error FROM jobs WHERE projectID = @projectid`
-	StmtInsertDataset         internal.Statement = `INSERT datasets (id, projectID, metadata) VALUES (@id, @projectID, @metadata)`
-	StmtDeleteTable           internal.Statement = `DELETE FROM tables WHERE projectID = @projectID AND datasetID = @datasetID AND id = @id`
+	StmtDeleteTable           internal.Statement = `DELETE FROM tables WHERE projectID = @projectID AND datasetID = @datasetID AND id = @tableID`
 	StmtInsertTable           internal.Statement = `INSERT INTO tables (id, projectID, datasetID, metadata) VALUES (@id, @projectID, @datasetID, @metadata)`
 	StmtFindTable             internal.Statement = `SELECT id, metadata FROM tables WHERE projectID = @projectID AND datasetID = @datasetID AND id = @tableID`
 	StmtUpdateTable           internal.Statement = `UPDATE tables SET metadata = @metadata WHERE projectID = @projectID AND datasetID = @datasetID AND id = @id`
 	StmtTableExists           internal.Statement = `SELECT TRUE FROM tables WHERE projectID = @projectID AND datasetID = @datasetID AND id = @tableID`
-	StmtFindTablesInDataset   internal.Statement = `SELECT id, datasetID, metadata FROM tables WHERE projectID = @projectID AND @datasetID = @datasetID`
+	StmtFindTablesInDataset   internal.Statement = `SELECT id, datasetID, metadata FROM tables WHERE projectID = @projectID AND datasetID = @datasetID`
 	StmtFindModelsInDataset   internal.Statement = `SELECT id, datasetID, metadata FROM models WHERE projectID = @projectID AND datasetID = @datasetID`
 	StmtUpdateModel           internal.Statement = `UPDATE models SET metadata = @metadata WHERE projectID = @projectID AND datasetID = @datasetID AND id = @id`
 	StmtInsertModel           internal.Statement = `INSERT INTO models (id, projectID, datasetID, metadata) VALUES (@id, @projectID, @datasetID, @metadata)`
@@ -92,6 +91,7 @@ const (
 	StmtUpdateJob             internal.Statement = `UPDATE jobs SET metadata = @metadata, result = @result, error = @error WHERE projectID = @projectID AND id = @id`
 	StmtDeleteJob             internal.Statement = `DELETE FROM jobs WHERE projectID = @projectID AND id = @jobID`
 	StmtFindDataset           internal.Statement = `SELECT id, projectID, metadata FROM datasets WHERE projectID = @projectID AND id = @datasetID`
+	StmtInsertDataset         internal.Statement = `INSERT INTO datasets (id, projectID, metadata) VALUES (@id, @projectID, @metadata)`
 	StmtDeleteDataset         internal.Statement = `DELETE FROM datasets WHERE projectID = @projectID AND id = @id`
 	StmtDatasetExists         internal.Statement = `SELECT TRUE FROM datasets WHERE projectID = @projectID AND id = @datasetID`
 	StmtUpdateDataset         internal.Statement = `UPDATE datasets SET metadata = @metadata WHERE projectID = @projectID AND id = @datasetID`
@@ -142,7 +142,6 @@ func NewRepository(db *sql.DB) (*Repository, error) {
 	preparedQueryRepository := internal.NewPreparedStatementRepository(
 		db,
 		preparedStatements,
-		true,
 	)
 	if err != nil {
 		return nil, err
@@ -669,8 +668,8 @@ func (r *Repository) findDatasets(ctx context.Context, tx *sql.Tx, projectID str
 			resultMetadata  string
 		)
 		err := stmt.QueryRowContext(ctx,
-			projectID,
-			datasetID,
+			sql.Named("projectID", projectID),
+			sql.Named("datasetID", datasetID),
 		).Scan(&resultDatasetID, &resultProjectID, &resultMetadata)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
@@ -702,9 +701,9 @@ func (r *Repository) AddDataset(ctx context.Context, tx *sql.Tx, dataset *Datase
 		return err
 	}
 	if _, err := stmt.ExecContext(ctx,
-		dataset.ID,
-		dataset.ProjectID,
-		string(metadata),
+		sql.Named("id", dataset.ID),
+		sql.Named("projectID", dataset.ProjectID),
+		sql.Named("metadata", string(metadata)),
 	); err != nil {
 		return err
 	}

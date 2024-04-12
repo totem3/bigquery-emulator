@@ -15,12 +15,9 @@ type PreparedStatementRepository struct {
 	preparedQueries map[Statement]*sql.Stmt
 }
 
-func NewPreparedStatementRepository(db *sql.DB, queries []Statement, formattingDisabled bool) *PreparedStatementRepository {
+func NewPreparedStatementRepository(db *sql.DB, queries []Statement) *PreparedStatementRepository {
 	var preparedQueries = map[Statement]*sql.Stmt{}
-	ctx := context.Background()
-	if formattingDisabled {
-		ctx = zetasqlite.WithQueryFormattingDisabled(ctx)
-	}
+	ctx := zetasqlite.WithQueryFormattingDisabled(context.Background())
 	for _, query := range queries {
 		stmt, err := db.PrepareContext(ctx, string(query))
 		if err != nil {
@@ -35,6 +32,7 @@ func NewPreparedStatementRepository(db *sql.DB, queries []Statement, formattingD
 }
 
 func (r *PreparedStatementRepository) Get(ctx context.Context, tx *sql.Tx, name Statement) (*sql.Stmt, error) {
+	ctx = zetasqlite.WithQueryFormattingDisabled(ctx)
 	if stmt, ok := r.preparedQueries[name]; ok {
 		return tx.StmtContext(ctx, stmt), nil
 	}

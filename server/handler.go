@@ -645,7 +645,7 @@ func (h *datasetsDeleteHandler) Handle(ctx context.Context, r *datasetsDeleteReq
 		return fmt.Errorf("failed to start transaction: %w", err)
 	}
 	defer tx.RollbackIfNotCommitted()
-	if err := r.project.DeleteDataset(ctx, tx.Tx(), r.dataset.ID); err != nil {
+	if err := r.dataset.Delete(ctx, tx.Tx()); err != nil {
 		return fmt.Errorf("failed to delete dataset: %w", err)
 	}
 	if r.deleteContents {
@@ -654,8 +654,8 @@ func (h *datasetsDeleteHandler) Handle(ctx context.Context, r *datasetsDeleteReq
 			return fmt.Errorf("failed to find tables in dataset: %w", err)
 		}
 		tableIDs := make([]string, len(tables))
-		for _, table := range tables {
-			tableIDs = append(tableIDs, table.ID)
+		for i, table := range tables {
+			tableIDs[i] = table.ID
 			if err := table.Delete(ctx, tx.Tx()); err != nil {
 				return err
 			}
@@ -958,7 +958,7 @@ func (h *jobsDeleteHandler) Handle(ctx context.Context, r *jobsDeleteRequest) er
 		return fmt.Errorf("failed to start transaction: %w", err)
 	}
 	defer tx.RollbackIfNotCommitted()
-	if err := r.project.DeleteJob(ctx, tx.Tx(), r.job.ID); err != nil {
+	if err := r.job.Delete(ctx, tx.Tx()); err != nil {
 		return fmt.Errorf("failed to delete job: %w", err)
 	}
 	if err := tx.Commit(); err != nil {

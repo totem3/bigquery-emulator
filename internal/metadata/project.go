@@ -66,10 +66,14 @@ func (p *Project) FetchJobs(ctx context.Context) ([]*Job, error) {
 }
 
 func (p *Project) Insert(ctx context.Context, tx *sql.Tx) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
 	return p.repo.AddProject(ctx, tx, p)
 }
 
 func (p *Project) Delete(ctx context.Context, tx *sql.Tx) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
 	return p.repo.DeleteProject(ctx, tx, p)
 }
 
@@ -83,8 +87,6 @@ func (p *Project) AddDataset(ctx context.Context, tx *sql.Tx, dataset *Dataset) 
 }
 
 func (p *Project) DeleteDataset(ctx context.Context, tx *sql.Tx, id string) error {
-	p.mu.Lock()
-	defer p.mu.Unlock()
 	dataset, err := p.Dataset(ctx, id)
 	if err != nil {
 		return err
@@ -92,6 +94,8 @@ func (p *Project) DeleteDataset(ctx context.Context, tx *sql.Tx, id string) erro
 	if dataset == nil {
 		return fmt.Errorf("dataset '%s' is not found in project '%s'", id, p.ID)
 	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
 	if err := dataset.Delete(ctx, tx); err != nil {
 		return err
 	}
@@ -108,15 +112,15 @@ func (p *Project) AddJob(ctx context.Context, tx *sql.Tx, job *Job) error {
 }
 
 func (p *Project) DeleteJob(ctx context.Context, tx *sql.Tx, id string) error {
-	p.mu.Lock()
-	defer p.mu.Unlock()
 	job, err := p.Job(ctx, id)
 	if err != nil {
 		return err
 	}
-	if job != nil {
+	if job == nil {
 		return fmt.Errorf("job '%s' is not found in project '%s'", id, p.ID)
 	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
 	if err := job.Delete(ctx, tx); err != nil {
 		return err
 	}
