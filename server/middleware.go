@@ -285,7 +285,7 @@ func withModelMiddleware() func(http.Handler) http.Handler {
 				dataset := datasetFromContext(ctx)
 				model, err := dataset.Model(ctx, modelID)
 				if err != nil {
-					errorResponse(ctx, w, errInternalError(fmt.Sprint("failed to find model: %s", err)))
+					errorResponse(ctx, w, errInternalError(fmt.Sprintf("failed to find model: %s", err)))
 					return
 				}
 				if model == nil {
