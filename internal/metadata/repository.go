@@ -778,6 +778,10 @@ func (r *Repository) FindTablesInDatasets(ctx context.Context, projectID, datase
 		return nil, err
 	}
 	defer tx.Commit()
+	return r.FindTablesInDatasetsWithConnection(ctx, tx, projectID, datasetID)
+}
+
+func (r *Repository) FindTablesInDatasetsWithConnection(ctx context.Context, tx *sql.Tx, projectID, datasetID string) ([]*Table, error) {
 	tablesByDataset, err := r.findTablesInDatasets(ctx, tx, projectID, []string{datasetID})
 	if err != nil {
 		return nil, err

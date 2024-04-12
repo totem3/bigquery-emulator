@@ -649,7 +649,7 @@ func (h *datasetsDeleteHandler) Handle(ctx context.Context, r *datasetsDeleteReq
 		return fmt.Errorf("failed to delete dataset: %w", err)
 	}
 	if r.deleteContents {
-		tables, err := r.dataset.Tables(ctx)
+		tables, err := r.server.metaRepo.FindTablesInDatasetsWithConnection(ctx, tx.Tx(), r.dataset.ProjectID, r.dataset.ID)
 		if err != nil {
 			return fmt.Errorf("failed to find tables in dataset: %w", err)
 		}
