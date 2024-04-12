@@ -240,17 +240,7 @@ func (r *Repository) FindProject(ctx context.Context, id string) (*Project, erro
 		return nil, err
 	}
 	defer tx.Commit()
-	projects, err := r.findProjects(ctx, tx, []string{id})
-	if err != nil {
-		return nil, err
-	}
-	if len(projects) != 1 {
-		return nil, nil
-	}
-	if projects[0].ID != id {
-		return nil, nil
-	}
-	return projects[0], nil
+	return r.FindProjectWithConn(ctx, tx, id)
 }
 
 func (r *Repository) findProjects(ctx context.Context, tx *sql.Tx, ids []string) ([]*Project, error) {
@@ -642,6 +632,10 @@ func (r *Repository) FindDataset(ctx context.Context, projectID, datasetID strin
 		return nil, err
 	}
 	defer tx.Commit()
+	return r.FindDatasetWithConnection(ctx, tx, projectID, datasetID)
+}
+
+func (r *Repository) FindDatasetWithConnection(ctx context.Context, tx *sql.Tx, projectID string, datasetID string) (*Dataset, error) {
 	datasets, err := r.findDatasets(ctx, tx, projectID, []string{datasetID})
 	if err != nil {
 		return nil, err
@@ -756,6 +750,10 @@ func (r *Repository) FindTable(ctx context.Context, projectID, datasetID, tableI
 		return nil, err
 	}
 	defer tx.Commit()
+	return r.FindTableWithConnection(ctx, tx, projectID, datasetID, tableID)
+}
+
+func (r *Repository) FindTableWithConnection(ctx context.Context, tx *sql.Tx, projectID, datasetID, tableID string) (*Table, error) {
 	tables, err := r.findTables(ctx, tx, projectID, datasetID, []string{tableID})
 	if err != nil {
 		return nil, err
