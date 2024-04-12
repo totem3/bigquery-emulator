@@ -5,12 +5,10 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/goccy/go-zetasqlite"
-	"reflect"
-	"strings"
-	"time"
-
 	"go.uber.org/zap"
 	bigqueryv2 "google.golang.org/api/bigquery/v2"
+	"reflect"
+	"strings"
 
 	"github.com/goccy/bigquery-emulator/internal/connection"
 	"github.com/goccy/bigquery-emulator/internal/logger"
@@ -78,12 +76,7 @@ func (r *Repository) routinePath(projectID, datasetID, routineID string) string 
 	routinePath = append(routinePath, routineID)
 	return strings.Join(routinePath, ".")
 }
-func timer(name string) func() {
-	start := time.Now()
-	return func() {
-		fmt.Printf("%s took %v\n", name, time.Since(start))
-	}
-}
+
 func (r *Repository) CreateTable(ctx context.Context, tx *connection.Tx, table *bigqueryv2.Table) error {
 	if err := tx.ContentRepoMode(); err != nil {
 		return err
